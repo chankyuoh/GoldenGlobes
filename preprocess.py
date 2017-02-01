@@ -3,22 +3,23 @@ import csv, pickle, sys, re
 # get list of arguments
 args = sys.argv
 
-classifiersFileName = args[1]
+awardsFile = args[1]
 awardKeyWordsFileName = args[2]
 awardsAndNomineesFileName = args[3]
 
-classifiersList = []
+awardsList = []
+awardsRegexList = []
+awardsDict = {}
 awardKeyWordsList = []
 awardsAndNominees = {}
 
-with open(classifiersFileName, 'rb') as classifiersCsv:
-    csvReader = csv.reader(classifiersCsv, delimiter=',')
-    outputFile = open('classifiers.dat', 'wb')
-    #classifiersList = []
+with open(awardsFile, 'rb') as awardsCsv:
+    csvReader = csv.reader(awardsCsv, delimiter=',')
+    outputFile = open('awardRegexs.dat', 'wb')
     for row in csvReader:
-        classifiersList.append(row[0])
+        awardsDict[row[0]] = row[1]
     p = pickle.Pickler(outputFile)
-    p.dump(classifiersList)
+    p.dump(awardsDict)
     outputFile.close()
 
 with open(awardKeyWordsFileName, 'rb') as awardKeyWordsCsv:
