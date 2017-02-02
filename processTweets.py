@@ -15,18 +15,6 @@ if not os.path.isfile('awardRegexs.dat'):
     print "please run preprocess.py first"
     quit()
 
-# load the award key words
-f = open('awardKeyWords.dat', "r")
-u = pickle.Unpickler(f)
-awardKeyWords = u.load()
-f.close()
-
-# load the nomineeOccurrences
-f = open('nomineeOccurrences.dat', "r")
-u = pickle.Unpickler(f)
-nomineeOccurrences = u.load()
-f.close()
-
 # this dict maps awards to regex
 f = open('awardRegexs.dat', "r")
 u = pickle.Unpickler(f)
