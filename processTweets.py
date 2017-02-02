@@ -1,14 +1,19 @@
 import re, pickle, nltk, os, csv
+from collections import Counter
 
-if not os.path.isfile('classifiers.dat') or not os.path.isfile('awardKeyWords.dat') or not os.path.isfile('awardsAndNominees.dat'):
+
+def subtract_lists(a, b):
+    multiset_difference = Counter(a) - Counter(b)
+    result = []
+    for i in a:
+        if i in multiset_difference:
+            result.append(i)
+            multiset_difference -= Counter((i,))
+    return result
+
+if not os.path.isfile('nomineeOccurrences.dat') or not os.path.isfile('awardKeyWords.dat') or not os.path.isfile('awardRegexs.dat'):
     print "please run preprocess.py first"
     quit()
-
-# # load the classifiers
-# f = open('classifiers.dat', "r")
-# u = pickle.Unpickler(f)
-# classifiers = u.load()
-# f.close()
 
 # load the award key words
 f = open('awardKeyWords.dat', "r")
@@ -16,115 +21,156 @@ u = pickle.Unpickler(f)
 awardKeyWords = u.load()
 f.close()
 
-# # load the awards/nominees
-# f = open('awardsAndNominees.dat', "r")
-# u = pickle.Unpickler(f)
-# awardsAndNominees = u.load()
-# f.close()
-
 # load the nomineeOccurrences
 f = open('nomineeOccurrences.dat', "r")
 u = pickle.Unpickler(f)
 nomineeOccurrences = u.load()
 f.close()
 
-# # initialize a dict that will map classifier -> award key word -> word in tweet -> number of occurrences
-# words = {}
-#
-# # initialize a dict that will map classifier -> award key word -> total number of words
-# # this will only count the number of words that were within three words of the classifier
-# wordCounts = {}
-#
-# for classifier in classifiers:
-#     words[classifier] = {}
-#     wordCounts[classifier] = {}
-#     for awardKeyWord in awardKeyWords:
-#         words[classifier][awardKeyWord] = {}
-#         wordCounts[classifier][awardKeyWord] = 0
+# this dict maps awards to regex
+f = open('awardRegexs.dat', "r")
+u = pickle.Unpickler(f)
+awardDict = u.load()
+f.close()
 
-#print words
-
-# ------------>>>>>>>>>>> use this for present, host, etc. <<<<<<<<<----------
-# with open('goldenglobes_preprocess.txt', 'rb') as tweetsFile:
-#     tweets = csv.reader(tweetsFile, delimiter=',')
-#     # iterate over each tweet
-#     for tweet in tweets:
-#         # tokenize each tweet
-#         tweetTokens = nltk.word_tokenize(tweet[0])
-#
-#         # check if the classifier is in the tweet
-#         for classifier in classifiers:
-#             for i in range(0, len(tweetTokens)):
-#                 # if you find a variant of the classifier
-#                 if re.search(classifier, tweetTokens[i], flags=re.I):
-#                     foundAwardKeyWord = False
-#                     # check if one of the award key words is also in the tweet
-#                     for awardKeyWord in awardKeyWords:
-#                         for j in range(0, len(tweetTokens)):
-#                             # if you find a variant of an award key word
-#                             if re.search(awardKeyWord, tweetTokens[j], flags=re.I):
-#                                 foundAwardKeyWord = True
-#
-#                                 # add all the words w/in 3 words of classifier to words dict
-#                                 # update wordsCounts dict accordingly
-#                                 for k in range(-3, 0)+range(1, 4):
-#                                     if (i+k >= 0) and (i+k) < len(tweetTokens):
-#                                         if tweetTokens[k+i] in words[classifier][awardKeyWord]:
-#                                             words[classifier][awardKeyWord][tweetTokens[k+i]] += 1
-#                                         else:
-#                                             words[classifier][awardKeyWord][tweetTokens[k+i]] = 1
-#                                         wordCounts[classifier][awardKeyWord] += 1
-#                                 # now go on to next award key word (don't keep search tweet for current one)
-#                                 break
-#
-#                     # if didn't find any award key words move on to next classifier
-#                     if not foundAwardKeyWord:
-#                         break
+hostOccurrences = {}
+awardsTweets = {}
+presentAwardsTweets = {}
+nomineeAwardsTweets = {}
+hashtags = []
+handles = []
 
 with open('goldenglobes_preprocess.txt', 'rb') as tweetsFile:
     tweets = csv.reader(tweetsFile, delimiter=',')
     # iterate over each tweet
     for tweet in tweets:
-        # if it contains the word win
-        if re.search('win', tweet[0], flags=re.I):
-            # check if it contains a key word
-            for awardKeyWord in awardKeyWords:
-                foundAwardKeyWord = False
-                if re.search(awardKeyWord, tweet[0], flags=re.I):
-                    foundAwardKeyWord = True
-                    # if it contains a key word, iterate over all the nominees associated with that key word
-                    # if it contains it, increment that nominee's counter
-                    # nominees[0] = nominee; nominees[1] = counter
-                    for award, nominees in nomineeOccurrences[awardKeyWord].items():
-                        for nominee, counter in nomineeOccurrences[awardKeyWord][award].items():
-                            x = nominee
-                            if ' ' not in nominee:
-                                x = '\s' + nominee + '\s'
-                            if re.search(x, tweet[0], flags=re.I):
-                                nomineeOccurrences[awardKeyWord][award][nominee] += 1
+        tweetTokens = nltk.word_tokenize(tweet[0])
+        # handles host tweets
+        if re.search('host', tweet[0], flags=re.I):
+            if '@' in tweet[0]:
+                for i in range(0, len(tweetTokens)):
+                    if tweetTokens[i] == '@' and i+1 < len(tweetTokens):
+                        handle = tweetTokens[i+1]
+                        if handle in hostOccurrences:
+                            hostOccurrences[handle] += 1
+                        else:
+                            hostOccurrences[handle] = 1
+        # for other tweets
+        # else:
+        elif re.search('win', tweet[0], flags=re.I):
+            for key, value in awardDict.iteritems():
+                if re.search(r"[^a-zA-Z]%s[^a-zA-Z]" % value, tweet[0], flags=re.I | re.X):
+                    t = tweet[0].lower()
+                    t = t.translate(None, ',.?!:;/()\"\'')
+                    awardsTweets.setdefault(key, []).append(t)
+                    break
+        elif re.search('present', tweet[0], flags=re.I):
+            for key, value in awardDict.iteritems():
+                if re.search(r"[^a-zA-Z]%s[^a-zA-Z]" % value, tweet[0], flags=re.I | re.X):
+                    t = tweet[0].lower()
+                    t = t.translate(None, ',.?!:;/()\"\'')
+                    presentAwardsTweets.setdefault(key, []).append(t)
+                    break
+        elif re.search('nomin', tweet[0], flags=re.I):
+            for key, value in awardDict.iteritems():
+                if re.search(r"[^a-zA-Z]%s[^a-zA-Z]" % value, tweet[0], flags=re.I | re.X):
+                    t = tweet[0].lower()
+                    t = t.translate(None, ',.?!:;/()\"\'')
+                    nomineeAwardsTweets.setdefault(key, []).append(t)
+                    break
 
-for awardKeyWord, blah in nomineeOccurrences.items():
-    for award, nominees in nomineeOccurrences[awardKeyWord].items():
-        winner = None
-        maxCount = 0
-        for nominee, count in nomineeOccurrences[awardKeyWord][award].items():
-            if count > maxCount:
-                winner = nominee
-                maxCount = count
-        print award + ": " + winner
+        if '#' in tweet[0]:
+            for i in range(0, len(tweetTokens)):
+                if tweetTokens[i] == '#' and i+1 < len(tweetTokens):
+                    hashtag = tweetTokens[i+1].lower()
+                    hashtags.append(hashtag)
 
-# outputFile = open('words.dat', 'wb')
-# p = pickle.Pickler(outputFile)
-# p.dump(words)
-# outputFile.close()
-#
-# outputFile = open('wordCounts.dat', 'wb')
-# p = pickle.Pickler(outputFile)
-# p.dump(wordCounts)
-# outputFile.close()
-#
-# outputFile = open('nomineeOccurrences.dat', 'wb')
-# p = pickle.Pickler(outputFile)
-# p.dump(nomineeOccurrences)
-# outputFile.close()
+        if '@' in tweet[0]:
+            for i in range(0, len(tweetTokens)):
+                if tweetTokens[i] == '@' and i+1 < len(tweetTokens):
+                    handle = tweetTokens[i+1].lower()
+                    handles.append(handle)
 
+print ""
+ignoreWords = ['rt', 'golden', 'globes', '#goldenglobes', 'tv', 'win', 'wins', 'winner', 'winning', 'won', 'film',
+               'movie', 'series', 'feature', 'supporting', 'actor', 'actress', 'best', 'performance', 'motion',
+               'screenplay', 'role', 'limited', 'director', 'animated', 'picture', 'original', 'score', 'foreign',
+               'language', 'television', '-', 'drama', 'comedy', 'musical', 'cecil', 'b', 'demille', 'award', 'song',
+               'present', '#goldenglobe', '2017', '2017-01-09', '@goldenglobes', 'congrats', 'congratulations',
+               '#congrats', 'yes', 'goes', 'globe', 'show', 'shows', 'miniseries', 'mini', 'presenting', 'presenter',
+               'presented', 'presents', 'presenters', 'year', '&amp', 'nominee', 'nominees', 'pair', 'next',
+               'comedymusical', 'nominating', 'nominated', 'years', 'category', 'nomination', 'nominations', 'clip',
+               'watch', 'red', 'carpet', 'dress', 'think', 'believe', 'speech', 'like', 'live', 'night', 'hope',
+               'hope', 'goldenglobe', 'goldenglobes', 'goldenglobes2017']
+stopWords = nltk.corpus.stopwords.words('english')
+for key, value in awardsTweets.iteritems():
+    awardsTweets[key] = Counter([words for segments in value for words in segments.split()])
+    possibilities = []
+    for k, v in awardsTweets[key].most_common(25):
+        possibilities.append(k)
+    possibilities = subtract_lists(subtract_lists(possibilities, stopWords), ignoreWords)
+    print 'Winner of ' + key+': ',
+    for possibility in possibilities:
+        if not re.search('http', possibility, flags=re.I | re.X):
+            print possibility + " ",
+    print ""
+print ""
+
+for key, value in presentAwardsTweets.iteritems():
+    presentAwardsTweets[key] = Counter([words for segments in value for words in segments.split()])
+    possibilities = []
+    for k, v in presentAwardsTweets[key].most_common(25):
+        possibilities.append(k)
+    possibilities = subtract_lists(subtract_lists(possibilities, stopWords), ignoreWords)
+    print 'Presenter of ' + key+': ',
+    for possibility in possibilities:
+        if not re.search('http', possibility, flags=re.I | re.X):
+            print possibility + " ",
+    print ""
+print ""
+
+for key, value in nomineeAwardsTweets.iteritems():
+    nomineeAwardsTweets[key] = Counter([words for segments in value for words in segments.split()])
+    possibilities = []
+    for k, v in nomineeAwardsTweets[key].most_common(40):
+        possibilities.append(k)
+    possibilities = subtract_lists(subtract_lists(possibilities, stopWords), ignoreWords)
+    print 'Nominees for ' + key+': ',
+    for possibility in possibilities:
+        if not re.search('http', possibility, flags=re.I | re.X):
+            print possibility + " ",
+    print ""
+print ""
+
+hostGuess = ""
+maxMentions = 0
+for handle, counter in hostOccurrences.items():
+    if counter > maxMentions:
+        hostGuess = handle
+        maxMentions = counter
+
+print "Host: ", hostGuess
+print ""
+
+allHashtags = Counter([words for segments in hashtags for words in segments.split()])
+possibilities = []
+for k, v in allHashtags.most_common(25):
+    possibilities.append(k)
+possibilities = subtract_lists(subtract_lists(possibilities, stopWords), ignoreWords)
+print 'Most used hashtags: ',
+for possibility in possibilities:
+    if not re.search('http', possibility, flags=re.I | re.X):
+        print possibility + " ",
+print ""
+
+allHandles = Counter([words for segments in handles for words in segments.split()])
+possibilities = []
+for k, v in allHandles.most_common(25):
+    possibilities.append(k)
+possibilities = subtract_lists(subtract_lists(possibilities, stopWords), ignoreWords)
+print 'Most used handles: ',
+for possibility in possibilities:
+    if not re.search('http', possibility, flags=re.I | re.X):
+        print possibility + " ",
+print ""
+print ""
