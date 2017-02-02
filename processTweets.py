@@ -11,7 +11,7 @@ def subtract_lists(a, b):
             multiset_difference -= Counter((i,))
     return result
 
-if not os.path.isfile('nomineeOccurrences.dat') or not os.path.isfile('awardKeyWords.dat') or not os.path.isfile('awardRegexs.dat'):
+if not os.path.isfile('awardRegexs.dat'):
     print "please run preprocess.py first"
     quit()
 
@@ -161,6 +161,7 @@ print 'Most used hashtags: ',
 for possibility in possibilities:
     if not re.search('http', possibility, flags=re.I | re.X):
         print possibility + " ",
+print ""
 print ""
 
 allHandles = Counter([words for segments in handles for words in segments.split()])
