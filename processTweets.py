@@ -89,7 +89,9 @@ ignoreWords = ['rt', 'golden', 'globes', '#goldenglobes', 'tv', 'win', 'wins', '
                'presented', 'presents', 'presenters', 'year', '&amp', 'nominee', 'nominees', 'pair', 'next',
                'comedymusical', 'nominating', 'nominated', 'years', 'category', 'nomination', 'nominations', 'clip',
                'watch', 'red', 'carpet', 'dress', 'think', 'believe', 'speech', 'like', 'live', 'night', 'hope',
-               'hope', 'goldenglobe', 'goldenglobes', 'goldenglobes2017']
+               'hope', 'goldenglobe', 'goldenglobes', 'goldenglobes2017', 'cnnent', '2017s', '1','2','3','4','5','6',
+               '7','8','9','0','seriestv','deserved','#tvseriesmusicalcomedy','much','@writermonkey77','cnnbrk',
+               'forbesshowbiz','seriestv', 'musicalcomedy', 'cnn', 'breaking', 'news']
 stopWords = nltk.corpus.stopwords.words('english')
 for key, value in awardsTweets.iteritems():
     awardsTweets[key] = Counter([words for segments in value for words in segments.split()])
@@ -100,7 +102,7 @@ for key, value in awardsTweets.iteritems():
     print 'Winner of ' + key+': ',
     for possibility in possibilities:
         if not re.search('http', possibility, flags=re.I | re.X):
-            print possibility + " ",
+            print possibility.replace("@","").replace("#","") + " ",
     print ""
 print ""
 
@@ -113,7 +115,7 @@ for key, value in presentAwardsTweets.iteritems():
     print 'Presenter of ' + key+': ',
     for possibility in possibilities:
         if not re.search('http', possibility, flags=re.I | re.X):
-            print possibility + " ",
+            print possibility.replace("@","").replace("#","") + " ",
     print ""
 print ""
 
@@ -126,7 +128,7 @@ for key, value in nomineeAwardsTweets.iteritems():
     print 'Nominees for ' + key+': ',
     for possibility in possibilities:
         if not re.search('http', possibility, flags=re.I | re.X):
-            print possibility + " ",
+            print possibility.replace("@","").replace("#","") + " ",
     print ""
 print ""
 
@@ -148,7 +150,7 @@ possibilities = subtract_lists(subtract_lists(possibilities, stopWords), ignoreW
 print 'Most used hashtags: ',
 for possibility in possibilities:
     if not re.search('http', possibility, flags=re.I | re.X):
-        print possibility + " ",
+        print possibility.replace("@","").replace("#","") + " ",
 print ""
 print ""
 
@@ -160,6 +162,6 @@ possibilities = subtract_lists(subtract_lists(possibilities, stopWords), ignoreW
 print 'Most used handles: ',
 for possibility in possibilities:
     if not re.search('http', possibility, flags=re.I | re.X):
-        print possibility + " ",
+        print possibility.replace("@","").replace("#","") + " ",
 print ""
 print ""
