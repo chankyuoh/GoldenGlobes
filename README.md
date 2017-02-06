@@ -1,7 +1,13 @@
 # GoldenGlobes
 Tweet Analyzer for the Golden Globes Award
-1. Find the names of the hosts 
-2. For each award, find the name of the winner 
-3. For each award, find the name of the presenter(s) 
-4. He also asked you to wow him with something else to add spice to the
-project. It’s up to you what that is. It depends on what information about the event you think you can extract from the tweets. It should be something that you think people will find interesting or fun.
+
+To run:
+1. run python preprocess.py goldenGlobesAwardsRegexs.csv
+2. run python processTweets.py
+
+Note the system currently outputs our guess for:
+1. each winner
+2. each presenter
+3. each host
+4. each nominee
+5. most talked about handles and hashtags
