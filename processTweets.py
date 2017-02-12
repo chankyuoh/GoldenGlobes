@@ -91,7 +91,21 @@ ignoreWords = ['rt', 'golden', 'globes', '#goldenglobes', 'tv', 'win', 'wins', '
                'watch', 'red', 'carpet', 'dress', 'think', 'believe', 'speech', 'like', 'live', 'night', 'hope',
                'hope', 'goldenglobe', 'goldenglobes', 'goldenglobes2017', 'cnnent', '2017s', '1','2','3','4','5','6',
                '7','8','9','0','seriestv','deserved','#tvseriesmusicalcomedy','much','@writermonkey77','cnnbrk',
-               'forbesshowbiz','seriestv', 'musicalcomedy', 'cnn', 'breaking', 'news']
+               'forbesshowbiz','seriestv', 'musicalcomedy', 'cnn', 'breaking', 'news','psiff17','spanish','starwars',
+               'rogueone','orgies','never','mind','place','fifth','three','tonight','nocturnal','g','come','dont',
+               'see','forget','tune','good','couldnt','nice','superhero','take','stage','rameshlaus','dubaionetv',
+               'dubai1goldenglobes','time','made', 'give','needs','please','toi','goldeng','presentation','rock',
+               'ally','equality','well-deserved','sold','undoubtedly','ht','awards','back','represent','honored',
+               'incredible','tonights','hubinsurance','mbtsmovie','mov','rules','apply','thenerdaily','even','really',
+               'love','nationalscreenwritersdays','day','get','bestactress','drector','notmydebt','directorthere',
+               'many','one','female', 'isnt','name','wasnt','single','release','iggypops','luck','1st','whats','sad',
+               'wishing','whose','afp','involved','cinema','tells','wallacejnichols','ferdosa_','introduces','interest',
+               'search','look','actoractress','alum','shes','great','filmaniaindo','single','every','wishes','women',
+               'stunning','therealtaraji','tennews','incredibly','get','burberry','recently','talented','guesswho',
+               'receiving','twittermoments','career','30','receives','express_pics','canadamoments','leftbankpics',
+               'nuts','season','snubbed','first','wi','jcamilveracruz','psiff17','monday','snapped','last','including',
+               'carpet','waiting','watched','cynpark13','introduce','introduces','search','films','interest','none','look',
+               '3rd','gets','goldenglobes','turnbull']
 stopWords = nltk.corpus.stopwords.words('english')
 for key, value in awardsTweets.iteritems():
     awardsTweets[key] = Counter([words for segments in value for words in segments.split()])
@@ -111,11 +125,13 @@ for key, value in presentAwardsTweets.iteritems():
     possibilities = []
     for k, v in presentAwardsTweets[key].most_common(25):
         possibilities.append(k)
+    for i in range(0, len(possibilities)):
+        possibilities[i] = possibilities[i].replace("@","").replace("#","")
     possibilities = subtract_lists(subtract_lists(possibilities, stopWords), ignoreWords)
     print 'Presenter of ' + key+': ',
     for possibility in possibilities:
         if not re.search('http', possibility, flags=re.I | re.X):
-            print possibility.replace("@","").replace("#","") + " ",
+            print possibility + " ",
     print ""
 print ""
 
@@ -124,11 +140,14 @@ for key, value in nomineeAwardsTweets.iteritems():
     possibilities = []
     for k, v in nomineeAwardsTweets[key].most_common(40):
         possibilities.append(k)
+    for i in range(0, len(possibilities)):
+        possibilities[i] = possibilities[i].replace("@","").replace("#","")
     possibilities = subtract_lists(subtract_lists(possibilities, stopWords), ignoreWords)
     print 'Nominees for ' + key+': ',
     for possibility in possibilities:
         if not re.search('http', possibility, flags=re.I | re.X):
-            print possibility.replace("@","").replace("#","") + " ",
+            # print possibility.replace("@","").replace("#","") + " ",
+            print possibility + " ",
     print ""
 print ""
 
