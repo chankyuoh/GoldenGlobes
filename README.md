@@ -4,7 +4,7 @@ Tweet Analyzer for the Golden Globes Award
 Shae Wang, Christopher Pierce, Aaron Zipursky, Chankyu Oh
 
 To run:
-1. run python preprocess.py goldenGlobesAwardsRegexs.csv goldenGlobesStopWords.csv
+1. run python preprocess.py goldenGlobesAwardsRegexs.csv goldenGlobesStopWords.csvs
 2. run python processTweets.py
 
 Note the system currently outputs our guess for:
